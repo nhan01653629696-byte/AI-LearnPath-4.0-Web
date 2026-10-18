@@ -169,12 +169,12 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
 }
 
 async function gemini(prompt,env){
- const model=env.GEMINI_MODEL||'gemini-2.5-flash';
- const ctl=new AbortController();let timeout=setTimeout(()=>ctl.abort(),22000);
+ const model=env.GEMINI_MODEL||'gemini-3.8-flash';
+ const ctl=new AbortController();let timeout=setTimeout(()=>ctl.abort(),35000);
  try{let r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
- method:'POST',headers:{'content-type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.35,maxOutputTokens:1100}}),signal:ctl.signal});
+ method:'POST',headers:{'content-type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{thinkingConfig:{thinkingLevel:'low'},maxOutputTokens:2048}}),signal:ctl.signal});
  let v=await r.json().catch(()=>({}));if(!r.ok){let msg=v.error?.message||'Nhà cung cấp AI không phản hồi';return json({error:`Gemini ${r.status}: ${String(msg).slice(0,250)}`},r.status===429?429:502)}
- let text=v.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('\n')||'';return text?json({text,model,provider:'Gemini'}):json({error:'Gemini chưa tạo được nội dung. Thử lại sau.'},502)
+ let text=v.candidates?.[0]?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join('\n')||'';return text?json({text,model,provider:'Gemini'}):json({error:'Gemini chưa tạo được nội dung. Thử lại sau.'},502)
  }catch(e){return json({error:e.name==='AbortError'?'Gemini phản hồi quá thời gian. Thử lại sau.':'Không kết nối được Gemini. Kiểm tra hạn mức và quyền của dự án.'},502)}finally{clearTimeout(timeout)}
 }
 export default {async fetch(request,env){try{
