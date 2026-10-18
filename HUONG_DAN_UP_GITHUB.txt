@@ -1,0 +1,21 @@
+AI LEARNPATH 4.0 – HƯỚNG DẪN ĐƯA WEB LÊN INTERNET
+
+1. GIẢI NÉN file ZIP. Không up nguyên ZIP làm file trên GitHub.
+2. GitHub -> New repository -> upload TOÀN BỘ CÁC FILE VÀ THƯ MỤC TRONG ZIP vào root repo.
+3. Cloudflare -> Workers & Pages -> Create -> Import Git repository -> chọn repo.
+   Worker name: ai-learnpath-4-web
+   Build command: npm run deploy
+   (Cấu hình có sẵn trong wrangler.jsonc.)
+4. Sau deploy, Worker -> Settings -> Variables and Secrets -> Add 2 Secret:
+   GEMINI_API_KEY: khóa MỚI từ AI Studio (không ghi vào Github).
+   ADMIN_SETUP_CODE: chuỗi bí mật do bạn tự chọn, ít nhất 16 ký tự.
+   Save / Deploy để áp dụng.
+5. Mở link https://ai-learnpath-4-web.<account>.workers.dev
+   Chọn Giáo viên -> Khởi tạo tài khoản quản trị đầu tiên (nhập ADMIN_SETUP_CODE).
+   Tạo lớp -> Nhập Excel / HS -> Giao bài -> AI phân tích -> Báo cáo.
+   Học sinh chỉ cần mã lớp + mã HS + PIN và link web.
+
+QUAN TRỌNG: GITHUB PAGES MỘT MÌNH KHÔNG THỂ CUNG CẤP CƠ SỞ DỮ LIỆU
+VÀ API GEMINI BẢO MẬT. CLOUDFLARE LÀ BƯỚC TRIỂN KHAI BẮT BUỘC.
+
+XEM README.md để có hướng dẫn đầy đủ.

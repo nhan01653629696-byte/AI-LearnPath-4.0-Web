@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import Q from '../src/questions.json' with {type:'json'};import {grade,weakSkills,adaptive,publicQuestions} from '../src/logic.js';
+test('bank: 42 valid questions',()=>{assert.equal(Q.length,42);for(const q of Q){assert.ok('ABCD'.includes(q.correct));assert.equal(q.options.length,4);assert.ok(q.explanation&&q.hint)}});
+test('grade deterministic',()=>{let qs=Q.slice(0,3);let got=grade(qs,{[qs[0].id]:qs[0].correct,[qs[1].id]:'?', [qs[2].id]:qs[2].correct});assert.equal(got.correct,2);assert.equal(got.total,3);assert.ok(got.score>6)});
+test('personalization ranks lower mastery first',()=>{let a=[{per:{'Phân số':{right:0,total:4},'Số tự nhiên':{right:4,total:4}}}];let b=adaptive(Q,a,5);assert.equal(b[0].skill,'Phân số');assert.equal(weakSkills(a)[0].skill,'Phân số')});
+test('student questions never reveal key',()=>{let pub=publicQuestions(Q.slice(0,1));assert.ok(!('correct' in pub[0]));assert.ok(!('explanation' in pub[0]))});

@@ -1,0 +1,632 @@
+[
+  {
+    "id": 1,
+    "skill": "Số tự nhiên",
+    "level": 1,
+    "prompt": "Chữ số 7 trong số 475 203 thuộc hàng nào?",
+    "options": [
+      "Hàng nghìn",
+      "Hàng chục nghìn",
+      "Hàng trăm nghìn",
+      "Hàng trăm"
+    ],
+    "correct": "B",
+    "explanation": "Trong 475 203, chữ số 7 ở hàng chục nghìn.",
+    "hint": "Đếm các hàng từ phải sang trái: đơn vị, chục, trăm, nghìn, chục nghìn."
+  },
+  {
+    "id": 2,
+    "skill": "Số tự nhiên",
+    "level": 1,
+    "prompt": "Số nào lớn nhất trong các số sau?",
+    "options": [
+      "89 990",
+      "90 009",
+      "90 090",
+      "89 999"
+    ],
+    "correct": "C",
+    "explanation": "90 090 lớn hơn 90 009 và các số 89 nghìn.",
+    "hint": "So sánh số chữ số rồi so từng chữ số từ trái sang phải."
+  },
+  {
+    "id": 3,
+    "skill": "Số tự nhiên",
+    "level": 2,
+    "prompt": "Làm tròn số 346 728 đến hàng nghìn được số nào?",
+    "options": [
+      "346 000",
+      "347 000",
+      "350 000",
+      "346 700"
+    ],
+    "correct": "B",
+    "explanation": "Vì chữ số hàng trăm là 7 nên làm tròn lên 347 000.",
+    "hint": "Khi làm tròn đến hàng nghìn, xem chữ số hàng trăm."
+  },
+  {
+    "id": 4,
+    "skill": "Số tự nhiên",
+    "level": 1,
+    "prompt": "Viết số gồm 5 trăm nghìn, 2 nghìn và 8 chục.",
+    "options": [
+      "502 080",
+      "520 080",
+      "502 800",
+      "500 280"
+    ],
+    "correct": "A",
+    "explanation": "500 000 + 2 000 + 80 = 502 080.",
+    "hint": "Tách theo giá trị từng hàng."
+  },
+  {
+    "id": 5,
+    "skill": "Số tự nhiên",
+    "level": 2,
+    "prompt": "Số liền sau của 999 999 là số nào?",
+    "options": [
+      "999 998",
+      "999 900",
+      "1 000 000",
+      "900 000"
+    ],
+    "correct": "C",
+    "explanation": "999 999 cộng 1 bằng 1 000 000.",
+    "hint": "Số liền sau lớn hơn số đã cho đúng 1 đơn vị."
+  },
+  {
+    "id": 6,
+    "skill": "Số tự nhiên",
+    "level": 3,
+    "prompt": "Từ các chữ số 1, 0, 8, 5 (mỗi chữ số dùng một lần), lập số lớn nhất.",
+    "options": [
+      "8 510",
+      "8 501",
+      "8 150",
+      "8 105"
+    ],
+    "correct": "A",
+    "explanation": "Sắp chữ số theo thứ tự giảm dần: 8, 5, 1, 0.",
+    "hint": "Muốn số lớn nhất, đặt chữ số lớn nhất bên trái."
+  },
+  {
+    "id": 7,
+    "skill": "Phép tính",
+    "level": 1,
+    "prompt": "Tính 347 + 258.",
+    "options": [
+      "595",
+      "605",
+      "615",
+      "505"
+    ],
+    "correct": "B",
+    "explanation": "347 + 258 = 605.",
+    "hint": "Cộng theo từng hàng, nhớ nếu tổng vượt quá 9."
+  },
+  {
+    "id": 8,
+    "skill": "Phép tính",
+    "level": 1,
+    "prompt": "Tính 900 − 475.",
+    "options": [
+      "425",
+      "525",
+      "435",
+      "325"
+    ],
+    "correct": "A",
+    "explanation": "900 − 475 = 425.",
+    "hint": "Đặt tính thẳng cột và thực hiện từ phải sang trái."
+  },
+  {
+    "id": 9,
+    "skill": "Phép tính",
+    "level": 2,
+    "prompt": "Tính 125 × 8.",
+    "options": [
+      "900",
+      "1 000",
+      "1 200",
+      "800"
+    ],
+    "correct": "B",
+    "explanation": "125 × 8 = 1 000.",
+    "hint": "Có thể tính 100 × 8 + 25 × 8."
+  },
+  {
+    "id": 10,
+    "skill": "Phép tính",
+    "level": 2,
+    "prompt": "Tính 936 : 12.",
+    "options": [
+      "68",
+      "88",
+      "78",
+      "76"
+    ],
+    "correct": "C",
+    "explanation": "936 : 12 = 78 vì 78 × 12 = 936.",
+    "hint": "Dùng phép nhân để kiểm tra kết quả chia."
+  },
+  {
+    "id": 11,
+    "skill": "Phép tính",
+    "level": 3,
+    "prompt": "Tính 24 × (35 + 5).",
+    "options": [
+      "860",
+      "940",
+      "960",
+      "1 040"
+    ],
+    "correct": "C",
+    "explanation": "35 + 5 = 40, 24 × 40 = 960.",
+    "hint": "Thực hiện phép tính trong ngoặc trước."
+  },
+  {
+    "id": 12,
+    "skill": "Phép tính",
+    "level": 3,
+    "prompt": "Tính 3 600 : (9 × 4).",
+    "options": [
+      "90",
+      "100",
+      "120",
+      "400"
+    ],
+    "correct": "B",
+    "explanation": "9 × 4 = 36, 3 600 : 36 = 100.",
+    "hint": "Tính biểu thức trong ngoặc trước."
+  },
+  {
+    "id": 13,
+    "skill": "Phân số",
+    "level": 1,
+    "prompt": "Phân số nào bằng một phần hai?",
+    "options": [
+      "2/3",
+      "3/6",
+      "3/5",
+      "2/5"
+    ],
+    "correct": "B",
+    "explanation": "3/6 = 1/2 vì chia cả tử và mẫu cho 3.",
+    "hint": "Tìm phân số có tử số bằng một nửa mẫu số."
+  },
+  {
+    "id": 14,
+    "skill": "Phân số",
+    "level": 1,
+    "prompt": "Trong phân số 5/8, mẫu số là số nào?",
+    "options": [
+      "5",
+      "8",
+      "13",
+      "3"
+    ],
+    "correct": "B",
+    "explanation": "Mẫu số là 8, nằm dưới gạch ngang.",
+    "hint": "Mẫu số cho biết đơn vị được chia thành bao nhiêu phần bằng nhau."
+  },
+  {
+    "id": 15,
+    "skill": "Phân số",
+    "level": 2,
+    "prompt": "Tính 2/7 + 3/7.",
+    "options": [
+      "5/14",
+      "1/7",
+      "5/7",
+      "6/7"
+    ],
+    "correct": "C",
+    "explanation": "Hai phân số cùng mẫu: cộng tử số, giữ mẫu số nên được 5/7.",
+    "hint": "Cộng các phân số cùng mẫu số bằng cách cộng tử số."
+  },
+  {
+    "id": 16,
+    "skill": "Phân số",
+    "level": 2,
+    "prompt": "Tính 7/9 − 2/9.",
+    "options": [
+      "5/9",
+      "5/18",
+      "9/9",
+      "4/9"
+    ],
+    "correct": "A",
+    "explanation": "7/9 − 2/9 = 5/9.",
+    "hint": "Giữ nguyên mẫu số 9 và trừ hai tử số."
+  },
+  {
+    "id": 17,
+    "skill": "Phân số",
+    "level": 3,
+    "prompt": "Phân số nào lớn hơn 3/4?",
+    "options": [
+      "1/2",
+      "2/3",
+      "5/8",
+      "7/8"
+    ],
+    "correct": "D",
+    "explanation": "7/8 > 6/8 = 3/4.",
+    "hint": "Quy đồng mẫu số để so sánh."
+  },
+  {
+    "id": 18,
+    "skill": "Phân số",
+    "level": 3,
+    "prompt": "Rút gọn phân số 12/18 được phân số nào?",
+    "options": [
+      "2/3",
+      "3/4",
+      "4/5",
+      "6/8"
+    ],
+    "correct": "A",
+    "explanation": "Chia cả tử và mẫu cho 6, được 2/3.",
+    "hint": "Tìm số tự nhiên lớn hơn 1 cùng chia hết tử và mẫu."
+  },
+  {
+    "id": 19,
+    "skill": "Đo lường",
+    "level": 1,
+    "prompt": "3 m 25 cm bằng bao nhiêu xăng-ti-mét?",
+    "options": [
+      "325 cm",
+      "305 cm",
+      "35 cm",
+      "3 025 cm"
+    ],
+    "correct": "A",
+    "explanation": "3 m = 300 cm; 300 + 25 = 325 cm.",
+    "hint": "Đổi mét sang xăng-ti-mét bằng cách nhân 100."
+  },
+  {
+    "id": 20,
+    "skill": "Đo lường",
+    "level": 1,
+    "prompt": "2 kg bằng bao nhiêu gam?",
+    "options": [
+      "200 g",
+      "20 g",
+      "2 000 g",
+      "20 000 g"
+    ],
+    "correct": "C",
+    "explanation": "1 kg = 1 000 g nên 2 kg = 2 000 g.",
+    "hint": "Nhớ mối quan hệ giữa ki-lô-gam và gam."
+  },
+  {
+    "id": 21,
+    "skill": "Đo lường",
+    "level": 2,
+    "prompt": "1 giờ 35 phút bằng bao nhiêu phút?",
+    "options": [
+      "65 phút",
+      "85 phút",
+      "95 phút",
+      "105 phút"
+    ],
+    "correct": "C",
+    "explanation": "60 + 35 = 95 phút.",
+    "hint": "Đổi một giờ thành 60 phút rồi cộng thêm."
+  },
+  {
+    "id": 22,
+    "skill": "Đo lường",
+    "level": 2,
+    "prompt": "4 phút 20 giây bằng bao nhiêu giây?",
+    "options": [
+      "240 giây",
+      "260 giây",
+      "420 giây",
+      "280 giây"
+    ],
+    "correct": "B",
+    "explanation": "4 × 60 + 20 = 260 giây.",
+    "hint": "1 phút có 60 giây."
+  },
+  {
+    "id": 23,
+    "skill": "Đo lường",
+    "level": 3,
+    "prompt": "Một bình chứa 3 lít nước, rót ra 750 ml. Còn lại bao nhiêu ml?",
+    "options": [
+      "2 250 ml",
+      "2 350 ml",
+      "2 500 ml",
+      "1 750 ml"
+    ],
+    "correct": "A",
+    "explanation": "3 lít = 3 000 ml; 3 000 − 750 = 2 250 ml.",
+    "hint": "Đổi hai đại lượng về cùng đơn vị trước khi trừ."
+  },
+  {
+    "id": 24,
+    "skill": "Đo lường",
+    "level": 2,
+    "prompt": "2 m² bằng bao nhiêu dm²?",
+    "options": [
+      "20 dm²",
+      "200 dm²",
+      "2 000 dm²",
+      "2000 m²"
+    ],
+    "correct": "B",
+    "explanation": "1 m² = 100 dm² nên 2 m² = 200 dm².",
+    "hint": "Đổi đơn vị diện tích: mỗi bậc gấp hoặc kém 100 lần."
+  },
+  {
+    "id": 25,
+    "skill": "Hình học",
+    "level": 1,
+    "prompt": "Hình chữ nhật có mấy góc vuông?",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "correct": "C",
+    "explanation": "Hình chữ nhật có bốn góc vuông.",
+    "hint": "Nhớ tính chất cơ bản của hình chữ nhật."
+  },
+  {
+    "id": 26,
+    "skill": "Hình học",
+    "level": 1,
+    "prompt": "Hình vuông có đặc điểm nào sau đây?",
+    "options": [
+      "Bốn cạnh bằng nhau và bốn góc vuông",
+      "Hai cạnh bằng nhau",
+      "Ba góc vuông",
+      "Không có góc vuông"
+    ],
+    "correct": "A",
+    "explanation": "Hình vuông có bốn cạnh bằng nhau và bốn góc vuông.",
+    "hint": "Kết hợp đặc điểm của cạnh và góc."
+  },
+  {
+    "id": 27,
+    "skill": "Hình học",
+    "level": 2,
+    "prompt": "Chu vi hình chữ nhật dài 9 cm, rộng 4 cm là bao nhiêu?",
+    "options": [
+      "13 cm",
+      "26 cm",
+      "36 cm",
+      "18 cm"
+    ],
+    "correct": "B",
+    "explanation": "(9 + 4) × 2 = 26 cm.",
+    "hint": "Chu vi hình chữ nhật = (chiều dài + chiều rộng) × 2."
+  },
+  {
+    "id": 28,
+    "skill": "Hình học",
+    "level": 2,
+    "prompt": "Diện tích hình chữ nhật dài 8 cm, rộng 5 cm là bao nhiêu?",
+    "options": [
+      "13 cm²",
+      "26 cm²",
+      "40 cm²",
+      "80 cm²"
+    ],
+    "correct": "C",
+    "explanation": "8 × 5 = 40 cm².",
+    "hint": "Diện tích hình chữ nhật = dài × rộng."
+  },
+  {
+    "id": 29,
+    "skill": "Hình học",
+    "level": 3,
+    "prompt": "Hình vuông có chu vi 36 cm. Diện tích là bao nhiêu?",
+    "options": [
+      "36 cm²",
+      "64 cm²",
+      "72 cm²",
+      "81 cm²"
+    ],
+    "correct": "D",
+    "explanation": "Cạnh = 36 : 4 = 9 cm, diện tích = 9 × 9 = 81 cm².",
+    "hint": "Tìm độ dài cạnh từ chu vi trước."
+  },
+  {
+    "id": 30,
+    "skill": "Hình học",
+    "level": 2,
+    "prompt": "Hình bình hành có đáy 10 cm, chiều cao 6 cm. Diện tích là bao nhiêu?",
+    "options": [
+      "16 cm²",
+      "30 cm²",
+      "60 cm²",
+      "120 cm²"
+    ],
+    "correct": "C",
+    "explanation": "Diện tích = 10 × 6 = 60 cm².",
+    "hint": "Diện tích hình bình hành = đáy × chiều cao."
+  },
+  {
+    "id": 31,
+    "skill": "Giải toán có lời văn",
+    "level": 1,
+    "prompt": "Lan có 24 nhãn vở, cho bạn 7 nhãn vở. Lan còn bao nhiêu?",
+    "options": [
+      "17",
+      "19",
+      "31",
+      "21"
+    ],
+    "correct": "A",
+    "explanation": "24 − 7 = 17 nhãn vở.",
+    "hint": "Cần tìm phần còn lại nên dùng phép trừ."
+  },
+  {
+    "id": 32,
+    "skill": "Giải toán có lời văn",
+    "level": 1,
+    "prompt": "Có 6 hộp bút, mỗi hộp 8 chiếc. Có tất cả bao nhiêu chiếc bút?",
+    "options": [
+      "14",
+      "42",
+      "48",
+      "56"
+    ],
+    "correct": "C",
+    "explanation": "6 × 8 = 48 chiếc bút.",
+    "hint": "Các nhóm bằng nhau có thể dùng phép nhân."
+  },
+  {
+    "id": 33,
+    "skill": "Giải toán có lời văn",
+    "level": 2,
+    "prompt": "Một thư viện có 180 quyển sách chia đều vào 9 kệ. Mỗi kệ có bao nhiêu quyển?",
+    "options": [
+      "15",
+      "18",
+      "20",
+      "25"
+    ],
+    "correct": "C",
+    "explanation": "180 : 9 = 20 quyển sách.",
+    "hint": "Chia đều thì dùng phép chia."
+  },
+  {
+    "id": 34,
+    "skill": "Giải toán có lời văn",
+    "level": 2,
+    "prompt": "Một cửa hàng bán 15 túi gạo, mỗi túi 5 kg. Đã bán bao nhiêu ki-lô-gam?",
+    "options": [
+      "20 kg",
+      "50 kg",
+      "75 kg",
+      "100 kg"
+    ],
+    "correct": "C",
+    "explanation": "15 × 5 = 75 kg.",
+    "hint": "Tìm khối lượng tất cả các túi bằng phép nhân."
+  },
+  {
+    "id": 35,
+    "skill": "Giải toán có lời văn",
+    "level": 3,
+    "prompt": "Đội A trồng 36 cây, đội B trồng gấp đôi đội A. Hai đội trồng tất cả bao nhiêu cây?",
+    "options": [
+      "72",
+      "96",
+      "108",
+      "144"
+    ],
+    "correct": "C",
+    "explanation": "Đội B 72 cây, cả hai đội 36 + 72 = 108 cây.",
+    "hint": "Tìm số cây đội B rồi tính tổng hai đội."
+  },
+  {
+    "id": 36,
+    "skill": "Giải toán có lời văn",
+    "level": 3,
+    "prompt": "Có 250 000 đồng. Mua 3 quyển vở, mỗi quyển 12 000 đồng. Còn bao nhiêu tiền?",
+    "options": [
+      "214 000 đồng",
+      "226 000 đồng",
+      "238 000 đồng",
+      "202 000 đồng"
+    ],
+    "correct": "A",
+    "explanation": "Tiền mua vở 36 000 đồng, còn 214 000 đồng.",
+    "hint": "Tìm tiền mua 3 quyển vở trước, sau đó trừ số tiền ban đầu."
+  },
+  {
+    "id": 37,
+    "skill": "Thống kê",
+    "level": 1,
+    "prompt": "Bảng số liệu có các giá trị 4, 6, 8. Số lớn nhất là?",
+    "options": [
+      "4",
+      "6",
+      "8",
+      "18"
+    ],
+    "correct": "C",
+    "explanation": "Trong ba giá trị, số lớn nhất là 8.",
+    "hint": "So sánh từng giá trị."
+  },
+  {
+    "id": 38,
+    "skill": "Thống kê",
+    "level": 1,
+    "prompt": "Trong biểu đồ cột, cột cao hơn thường biểu diễn điều gì?",
+    "options": [
+      "Giá trị lớn hơn",
+      "Giá trị nhỏ hơn",
+      "Giá trị bằng không",
+      "Không xác định"
+    ],
+    "correct": "A",
+    "explanation": "Với cùng thang đo, cột cao hơn thể hiện giá trị lớn hơn.",
+    "hint": "Quan sát trục số và chiều cao các cột."
+  },
+  {
+    "id": 39,
+    "skill": "Thống kê",
+    "level": 2,
+    "prompt": "Số học sinh đọc sách mỗi ngày là 5, 7, 6, 8. Tổng số lượt là?",
+    "options": [
+      "20",
+      "24",
+      "26",
+      "28"
+    ],
+    "correct": "C",
+    "explanation": "5 + 7 + 6 + 8 = 26.",
+    "hint": "Cộng lần lượt bốn số liệu."
+  },
+  {
+    "id": 40,
+    "skill": "Thống kê",
+    "level": 2,
+    "prompt": "Một bảng cho biết tuần 1 bán 24 cây, tuần 2 bán 30 cây. Tuần 2 nhiều hơn bao nhiêu?",
+    "options": [
+      "4",
+      "6",
+      "8",
+      "54"
+    ],
+    "correct": "B",
+    "explanation": "30 − 24 = 6 cây.",
+    "hint": "Tính hiệu giữa tuần nhiều và tuần ít."
+  },
+  {
+    "id": 41,
+    "skill": "Thống kê",
+    "level": 3,
+    "prompt": "Bốn lớp quyên góp lần lượt 12, 15, 11 và 18 cuốn sách. Trung bình mỗi lớp bao nhiêu cuốn?",
+    "options": [
+      "12",
+      "13",
+      "14",
+      "15"
+    ],
+    "correct": "C",
+    "explanation": "(12 + 15 + 11 + 18) : 4 = 14 cuốn.",
+    "hint": "Cộng số sách của bốn lớp rồi chia cho 4."
+  },
+  {
+    "id": 42,
+    "skill": "Thống kê",
+    "level": 3,
+    "prompt": "Một biểu đồ ghi số lượt tham gia là 9, 12, 15. Nếu tăng đều, lượt tiếp theo là?",
+    "options": [
+      "16",
+      "17",
+      "18",
+      "20"
+    ],
+    "correct": "C",
+    "explanation": "Dãy số tăng đều mỗi lần 3, tiếp theo là 18.",
+    "hint": "Tính khoảng cách giữa các số liền nhau."
+  }
+]
