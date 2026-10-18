@@ -4,6 +4,7 @@
   "main": "src/worker.js",
   "compatibility_date": "2026-08-01",
   "observability": {"enabled": true},
+  "placement": {"region": "gcp:us-east4"},
   "durable_objects": {
     "bindings": [{"name": "LEARNPATH_DB", "class_name": "LearnPathDB"}]
   },
