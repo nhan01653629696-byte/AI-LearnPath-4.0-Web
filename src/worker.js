@@ -47,8 +47,17 @@ CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,role TEXT NOT NULL,use
 CREATE TABLE IF NOT EXISTS quiz_issues(id TEXT PRIMARY KEY,student_id TEXT NOT NULL,question_ids TEXT NOT NULL,expires_at INTEGER NOT NULL,used_at TEXT);
 CREATE TABLE IF NOT EXISTS approved_notes(id TEXT PRIMARY KEY,teacher_id TEXT NOT NULL,class_id TEXT,student_id TEXT,kind TEXT NOT NULL,content TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total INTEGER NOT NULL,PRIMARY KEY(key,day));`);
+  // Nang cap bo sung, khong xoa hoac tao lai bang dang co du lieu.
+  const extra={teachers:{username:'TEXT',school:'TEXT',address:'TEXT',phone:'TEXT'},students:{school:'TEXT',address:'TEXT',phone:'TEXT',email:'TEXT'}};
+  for(const [table,fields] of Object.entries(extra)){
+   const existing=new Set(rows(s,`PRAGMA table_info(${table})`).map(r=>r.name));
+   for(const [field,type] of Object.entries(fields))if(!existing.has(field))s.exec(`ALTER TABLE ${table} ADD COLUMN ${field} ${type}`);
+  }
+  // Giu email cu la ten dang nhap mac dinh cua tat ca giao vien hien huu.
+  s.exec('UPDATE teachers SET username=lower(email) WHERE username IS NULL OR trim(username)=?', '');
+  s.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_teachers_username ON teachers(username)');
  });}
- async auth(req){let token=cookie(req);if(!token)return null;let h=await sha(token);let s=first(this.sql,'SELECT * FROM sessions WHERE hash=?',h);if(!s||s.expires_at<Date.now())return null;let u=s.role==='teacher'?first(this.sql,'SELECT id,email,full_name FROM teachers WHERE id=?',s.user_id):first(this.sql,'SELECT id,code,name,class_id FROM students WHERE id=?',s.user_id);return u?{...u,role:s.role}:null}
+ async auth(req){let token=cookie(req);if(!token)return null;let h=await sha(token);let s=first(this.sql,'SELECT * FROM sessions WHERE hash=?',h);if(!s||s.expires_at<Date.now())return null;let u=s.role==='teacher'?first(this.sql,'SELECT id,email,username,full_name,school FROM teachers WHERE id=?',s.user_id):first(this.sql,'SELECT id,code,name,class_id FROM students WHERE id=?',s.user_id);return u?{...u,role:s.role}:null}
  async start(role,id){let token=random()+random();this.sql.exec('INSERT INTO sessions(hash,role,user_id,expires_at) VALUES(?,?,?,?)',await sha(token),role,id,Date.now()+7*86400000);return token}
  owned(cls,teacher){let c=first(this.sql,'SELECT * FROM classes WHERE id=? AND teacher_id=?',cls,teacher.id);if(!c)bad('Không tìm thấy lớp học hoặc không có quyền truy cập',404);return c}
  studentOwned(sid,teacher){let s=first(this.sql,'SELECT s.* FROM students s JOIN classes c ON c.id=s.class_id WHERE s.id=? AND c.teacher_id=?',sid,teacher.id);if(!s)bad('Không tìm thấy học sinh',404);return s}
@@ -74,17 +83,26 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
  async route(req){const sql=this.sql, url=new URL(req.url), path=url.pathname,method=req.method;
   if(method==='GET'&&path==='/api/bootstrap')return json({has_admin:!!first(sql,'SELECT id FROM teachers LIMIT 1'),skills:SKILLS,questions_count:QUESTIONS.length});
   if(method==='POST'&&path==='/api/auth/register'){
-   const d=await read(req),email=safe(d.email,140).toLowerCase(),name=safe(d.name,100),pass=String(d.password||'');
-   if(!email.includes('@')||!name||pass.length<10)bad('Vui lòng nhập tên, email và mật khẩu tối thiểu 10 ký tự');
-   if(first(sql,'SELECT id FROM teachers WHERE email=?',email))bad('Email đã được sử dụng');
+   const d=await read(req),email=safe(d.email||((d.account||'').includes('@')?d.account:''),140).toLowerCase(),name=safe(d.name,100),pass=String(d.password||'');
+   const username=safe(d.username||d.account||email,140).toLowerCase();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!name||pass.length<10)bad('Vui lòng nhập họ tên, email hợp lệ và mật khẩu từ 10 ký tự');
+   if(username!==email&&!/^[a-z0-9._-]{4,40}$/.test(username))bad('Tài khoản gồm 4–40 chữ, số hoặc dấu . _ -');
+   if(first(sql,'SELECT id FROM teachers WHERE email=? OR username=?',email,username))bad('Email hoặc tài khoản đã được sử dụng',409);
    const existed=first(sql,'SELECT id FROM teachers LIMIT 1');let codeHash='';
    if(!existed){if(req.headers.get('x-internal-setup')!=='yes')bad('Mã khởi tạo quản trị chưa hợp lệ',403)}
    else {const code=safe(d.invite,100);if(!code)bad('Cần mã mời từ giáo viên quản trị',403);codeHash=await sha(code);const inv=first(sql,'SELECT * FROM invites WHERE code_hash=? AND used_at IS NULL',codeHash);if(!inv)bad('Mã mời không hợp lệ hoặc đã sử dụng',403)}
-   let id=random();sql.exec('INSERT INTO teachers VALUES(?,?,?,?,?)',id,email,name,await password(pass),now());if(codeHash)sql.exec('UPDATE invites SET used_at=? WHERE code_hash=?',now(),codeHash);
-   const token=await this.start('teacher',id);return json({ok:true,role:'teacher',name},200,{'set-cookie':sessionCookie(token,604800)});
+   let id=random();const hashed=await password(pass);
+   this.atomic(()=>{
+    sql.exec('INSERT INTO teachers(id,email,full_name,pass_hash,created_at,username) VALUES(?,?,?,?,?,?)',id,email,name,hashed,now(),username);
+    if(codeHash)sql.exec('UPDATE invites SET used_at=? WHERE code_hash=?',now(),codeHash);
+   });
+   // Khong tu dang nhap: moi tai khoan phai dang nhap lai bang thong tin da tao.
+   return json({ok:true,registered:true,message:'Tạo tài khoản thành công. Vui lòng đăng nhập.'},200,{'set-cookie':sessionCookie('',0)});
   }
   if(method==='POST'&&path==='/api/auth/login'){
-   const d=await read(req);const t=first(sql,'SELECT * FROM teachers WHERE email=?',safe(d.email,140).toLowerCase());if(!t||!(await verify(String(d.password||''),t.pass_hash)))bad('Email hoặc mật khẩu chưa đúng',401);
+   const d=await read(req),account=safe(d.account||d.email,140).toLowerCase();
+   const t=first(sql,'SELECT * FROM teachers WHERE email=? OR username=?',account,account);
+   if(!t||!(await verify(String(d.password||''),t.pass_hash)))bad('Tài khoản hoặc mật khẩu chưa đúng',401);
    const token=await this.start('teacher',t.id);return json({ok:true,role:'teacher',name:t.full_name},200,{'set-cookie':sessionCookie(token,604800)});
   }
   if(method==='POST'&&path==='/api/auth/student-login'){
@@ -98,6 +116,53 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
   let u=await this.auth(req);
   if(method==='GET'&&path==='/api/me')return json({user:u,ai_available:req.headers.get('x-ai-available')==='yes'});
   if(!u)bad('Vui lòng đăng nhập',401);
+  // Ho so rieng tung tai khoan. Tuyet doi khong tra mat khau/PIN/hash ra trinh duyet.
+  if(method==='GET'&&path==='/api/profile'){
+   if(u.role==='teacher'){
+    const t=first(sql,'SELECT id,username,email,full_name,school,address,phone FROM teachers WHERE id=?',u.id);
+    const classes=rows(sql,'SELECT id,name,code FROM classes WHERE teacher_id=? ORDER BY created_at DESC',u.id);
+    return json({role:'teacher',profile:{...t,school:t.school||'',address:t.address||'',phone:t.phone||''},classes});
+   }
+   const s=first(sql,'SELECT s.id,s.code,s.name,s.school,s.address,s.phone,s.email,c.name AS class_name,c.code AS class_code FROM students s JOIN classes c ON c.id=s.class_id WHERE s.id=?',u.id);
+   return json({role:'student',profile:{...s,school:s.school||'',address:s.address||'',phone:s.phone||'',email:s.email||''}});
+  }
+  if(method==='PUT'&&path==='/api/profile'){
+   const d=await read(req),name=safe(d.name,100),school=safe(d.school,120),address=safe(d.address,220),phone=safe(d.phone,24),email=safe(d.email,140).toLowerCase();
+   if(name.length<2)bad('Họ tên cần ít nhất 2 ký tự');
+   if(phone&&!/^[0-9+().\s-]{6,24}$/.test(phone))bad('Số điện thoại chưa hợp lệ');
+   if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))bad('Email chưa hợp lệ');
+   if(u.role==='teacher'){
+    const username=safe(d.username,140).toLowerCase();
+    const old=first(sql,'SELECT username FROM teachers WHERE id=?',u.id)?.username;
+    if(username!==old&&!/^[a-z0-9._-]{4,40}$/.test(username))bad('Tài khoản mới gồm 4–40 chữ, số hoặc dấu . _ -');
+    if(!email)bad('Email giáo viên không được để trống');
+    if(first(sql,'SELECT id FROM teachers WHERE id<>? AND (email=? OR username=?)',u.id,email,username))bad('Email hoặc tài khoản đã có người sử dụng',409);
+    sql.exec('UPDATE teachers SET username=?,email=?,full_name=?,school=?,address=?,phone=? WHERE id=?',username,email,name,school,address,phone,u.id);
+   }else{
+    sql.exec('UPDATE students SET name=?,school=?,address=?,phone=?,email=? WHERE id=?',name,school,address,phone,email,u.id);
+   }
+   return json({ok:true,message:'Đã cập nhật hồ sơ thành công'});
+  }
+  if(method==='POST'&&path==='/api/profile/credential'){
+   const d=await read(req),current=String(d.current||''),next=String(d.next||'');
+   if(u.role==='teacher'){
+    const t=first(sql,'SELECT pass_hash FROM teachers WHERE id=?',u.id);
+    if(!t||!(await verify(current,t.pass_hash)))bad('Mật khẩu hiện tại chưa đúng',403);
+    if(next.length<10||next.length>200)bad('Mật khẩu mới phải từ 10 đến 200 ký tự');
+    if(next===current)bad('Mật khẩu mới phải khác mật khẩu hiện tại');
+    const hash=await password(next);
+    this.atomic(()=>{sql.exec('UPDATE teachers SET pass_hash=? WHERE id=?',hash,u.id);sql.exec('DELETE FROM sessions WHERE role=? AND user_id=?','teacher',u.id)});
+   }else{
+    const student=first(sql,'SELECT pin_hash FROM students WHERE id=?',u.id);
+    if(!student||!(await verify(current,student.pin_hash)))bad('PIN hiện tại chưa đúng',403);
+    if(!/^\d{6}$/.test(next))bad('PIN mới phải gồm đúng 6 chữ số');
+    if(next===current)bad('PIN mới phải khác PIN hiện tại');
+    const hash=await password(next);
+    this.atomic(()=>{sql.exec('UPDATE students SET pin_hash=? WHERE id=?',hash,u.id);sql.exec('DELETE FROM sessions WHERE role=? AND user_id=?','student',u.id)});
+   }
+   return json({ok:true,reauth:true,message:'Đổi mật khẩu/PIN thành công. Vui lòng đăng nhập lại.'},200,{'set-cookie':sessionCookie('',0)});
+  }
+
   if(u.role==='teacher'){
    if(method==='GET'&&path==='/api/teacher/invite-status')return json({message:'Chia sẻ mã mời một lần với đồng nghiệp để tạo tài khoản giáo viên.'});
    if(method==='POST'&&path==='/api/teacher/invite'){const invite=random().slice(0,12).toUpperCase();sql.exec('INSERT INTO invites VALUES(?,?,NULL)',await sha(invite),u.id);return json({invite})}
@@ -171,7 +236,7 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
     if(!arr.length||arr.length>100)bad('Hãy nhập từ 1 đến 100 học sinh/lần');let out=[];
     for(const x of arr){let code=safe(x.code,30).toUpperCase(),name=safe(x.name,100),pin=String(x.pin||'').trim();if(!code||!name)continue;
      if(first(sql,'SELECT id FROM students WHERE class_id=? AND code=?',c.id,code))continue;
-     if(!/^\d{6}$/.test(pin))pin=String(100000+(crypto.getRandomValues(new Uint32Array(1))[0]%900000));let id=random();sql.exec('INSERT INTO students VALUES(?,?,?,?,?,?)',id,c.id,code,name,await password(pin),now());out.push({id,code,name,pin});
+     if(!/^\d{6}$/.test(pin))pin=String(100000+(crypto.getRandomValues(new Uint32Array(1))[0]%900000));let id=random();sql.exec('INSERT INTO students(id,class_id,code,name,pin_hash,created_at) VALUES(?,?,?,?,?,?)',id,c.id,code,name,await password(pin),now());out.push({id,code,name,pin});
     }
     if(!out.length)bad('Không có học sinh mới. Kiểm tra mã HS trùng hoặc dữ liệu trống');return json({inserted:out,count:out.length,class_code:c.code});
    }
@@ -198,7 +263,7 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
      return json({notes:result});
    }
    if(method==='POST'&&path==='/api/teacher/seed'){
-    const d=await read(req);const c=this.owned(d.class_id,u);let made=[];for(let i=1;i<=34;i++){let code='HS'+String(i).padStart(2,'0');if(first(sql,'SELECT id FROM students WHERE class_id=? AND code=?',c.id,code))continue;let pin=String(100000+i);let id=random();sql.exec('INSERT INTO students VALUES(?,?,?,?,?,?)',id,c.id,code,'Học sinh '+String(i).padStart(2,'0'),await password(pin),now());made.push({code,pin});}
+    const d=await read(req);const c=this.owned(d.class_id,u);let made=[];for(let i=1;i<=34;i++){let code='HS'+String(i).padStart(2,'0');if(first(sql,'SELECT id FROM students WHERE class_id=? AND code=?',c.id,code))continue;let pin=String(100000+i);let id=random();sql.exec('INSERT INTO students(id,class_id,code,name,pin_hash,created_at) VALUES(?,?,?,?,?,?)',id,c.id,code,'Học sinh '+String(i).padStart(2,'0'),await password(pin),now());made.push({code,pin});}
     return json({count:made.length,accounts:made,note:'Hồ sơ giả định để kiểm tra phần mềm, không phải dữ liệu học tập thật.'});
    }
    if(method==='POST'&&path==='/api/ai/teacher'){
