@@ -27,13 +27,61 @@ function viewDashboard(){const d=state.overview||{classes:[],student_count:0,att
 <div class="two-columns">${panel('Lớp học của tôi',`<div class="section-actions">${button('＋ Tạo lớp mới','create-class')}${button('Mời giáo viên','generate-invite','ghost')}</div>${d.classes.length?d.classes.map(c=>`<button class="class-row" data-open-class="${c.id}"><span class="row-icon">${icon('users')}</span><span><strong>${esc(c.name)}</strong><small>Mã lớp ${esc(c.code)} • ${c.students} học sinh • ${c.assignments} bài giao</small></span>${icon('right',18)}</button>`).join(''):empty('Chưa có lớp học','Hãy tạo lớp để bắt đầu nhập danh sách và giao bài.')}`)}${panel('Bắt đầu nhanh',`<div class="quick-grid"><button data-nav="import">${icon('upload',24)}<strong>Nhập Excel</strong><small>Thêm danh sách hoặc điểm</small></button><button data-nav="assign">${icon('book',24)}<strong>Giao bài</strong><small>42 câu Toán 4</small></button><button data-nav="ai">${icon('spark',24)}<strong>Phân tích bằng AI</strong><small>Gemini gợi ý can thiệp</small></button><button data-nav="report">${icon('printer',24)}<strong>In phiếu & báo cáo</strong><small>Dành cho giáo viên</small></button></div>`)} </div>`}
 function hero(main,subtitle){return `<div class="hero"><div><span class="hero-tag">✦ AI LEARNPATH 4.0 • TOÁN LỚP 4</span><h2>${main}</h2><p>${subtitle}</p></div><div class="hero-art"><div class="orbit orbit1"></div><div class="orbit orbit2"></div>${icon('spark',70)}</div></div>`}
 function classSelect(cls=''){return `<select id="pick-class" data-class-select><option value="">— Chọn lớp học —</option>${(state.overview?.classes||[]).map(c=>`<option value="${c.id}" ${state.cls===c.id?'selected':''}>${esc(c.name)} (${esc(c.code)})</option>`).join('')}</select>`}
-function viewClass(){return `${title('Lớp học và học sinh','Quản lý mã lớp, tài khoản ôn tập và tiến bộ theo từng em.')}${panel('Chọn lớp học',`<div class="toolrow">${classSelect()}${button('＋ Tạo lớp','create-class','secondary')}${button('＋ Thêm học sinh','add-students','secondary')}${button('Thêm 34 hồ sơ thử nghiệm','seed','ghost')}</div><p class="note">Hồ sơ thử nghiệm sử dụng tên và dữ liệu giả định để giới thiệu tính năng, không phải kết quả học tập thực tế.</p>`)}${!state.class?empty('Chọn lớp để xem hồ sơ','Em có thể tạo lớp mới ở nút phía trên.'):panel(`${esc(state.class.class.name)} · ${esc(state.class.class.code)}`,`<div class="table-wrap"><table><thead><tr><th>Mã HS</th><th>Họ tên</th><th>Lượt làm</th><th>Kỹ năng cần ôn</th><th></th></tr></thead><tbody>${state.class.students.map(s=>`<tr><td><strong>${esc(s.code)}</strong></td><td>${esc(s.name)}</td><td>${s.profile.total}</td><td>${s.profile.weak.slice(0,2).map(v=>badge(v.skill)).join(' ')||'<span class="muted">Chưa có dữ liệu</span>'}</td><td><button class="text-button" data-open-student="${s.id}">Chi tiết ${icon('right',14)}</button></td></tr>`).join('')}</tbody></table></div><p class="note">Để học sinh đăng nhập: mã lớp <strong>${esc(state.class.class.code)}</strong> + mã học sinh + PIN đã cấp khi nhập.</p>`)}`}
+function viewClass(){return `${title('Lớp học và học sinh','Quản lý mã lớp, tài khoản và kết quả học tập. Chỉ giáo viên chủ nhiệm lớp mới được phép xóa.')}${panel('Chọn lớp học',`<div class="toolrow">${classSelect()}${button('＋ Tạo lớp','create-class','secondary')}${button('＋ Thêm học sinh','add-students','secondary')}${button('Thêm 34 hồ sơ thử nghiệm','seed','ghost')}</div><p class="note">Các thao tác xóa bên dưới là xóa vĩnh viễn. Nên xuất bản sao dữ liệu trước khi thực hiện.</p>`)}${!state.class?empty('Chọn lớp để xem hồ sơ','Em có thể tạo lớp mới ở nút phía trên.'):panel(`${esc(state.class.class.name)} · ${esc(state.class.class.code)}`,`<div class="toolrow manage-tools">${button('Sao lưu dữ liệu lớp (.json)','backup-class','secondary')}${button('Xóa điểm & bài làm cả lớp','clear-class-data','danger')}${button('Xóa cả lớp','delete-class','danger')}</div><div class="table-wrap"><table><thead><tr><th>Mã HS</th><th>Họ tên</th><th>Lượt làm</th><th>Kỹ năng cần ôn</th><th>Thao tác</th></tr></thead><tbody>${state.class.students.map(s=>`<tr><td><strong>${esc(s.code)}</strong></td><td>${esc(s.name)}</td><td>${s.profile.total}</td><td>${s.profile.weak.slice(0,2).map(v=>badge(v.skill)).join(' ')||'<span class="muted">Chưa có dữ liệu</span>'}</td><td><div class="student-actions"><button class="text-button" data-open-student="${s.id}">Chi tiết ${icon('right',14)}</button><button class="text-button warn-action" data-action="clear-student-data" data-id="${s.id}">Xóa kết quả</button><button class="text-button delete-action" data-action="delete-student" data-id="${s.id}">Xóa HS</button></div></td></tr>`).join('')}</tbody></table></div><p class="note">Học sinh đăng nhập bằng mã lớp <strong>${esc(state.class.class.code)}</strong> + mã HS + PIN. Xóa kết quả vẫn giữ tài khoản HS; xóa HS sẽ thu hồi quyền đăng nhập và xóa lịch sử của em đó.</p>`)}`}
 function viewImport(){return `${title('Nhập dữ liệu Excel','Nhập danh sách học sinh hoặc kết quả kiểm tra từ Excel .xlsx, .csv. Không cần cài phần mềm.')}${panel('1. Chọn lớp và loại dữ liệu',`<div class="toolrow">${classSelect()}<select id="import-type"><option value="students">Danh sách học sinh</option><option value="grades">Bảng điểm kiểm tra</option></select><input id="import-label" value="Kiểm tra Toán 4" aria-label="Tên đợt kiểm tra"></div><div class="upload-zone" id="upload-zone">${icon('upload',36)}<strong>Kéo thả hoặc chọn file Excel tại đây</strong><small>Hỗ trợ .xlsx và .csv; tối đa 300 dòng bảng điểm hoặc 100 học sinh/lần</small><input id="excel-file" type="file" accept=".xlsx,.csv,text/csv"></div><div id="import-preview"></div><p class="note"><strong>Cột danh sách:</strong> Mã HS | Họ tên | PIN (có thể để trống). <strong>Cột điểm:</strong> Mã HS | Điểm | Điểm tối đa. ${button('Tải mẫu CSV','template','ghost')}</p>`)} `}
-function viewAssign(){let q=state.questions;return `${title('Giao bài Toán 4','Thiết kế nhiệm vụ theo chủ đề và mức độ; học sinh làm bài trực tuyến.')}${panel('Tạo nhiệm vụ mới',`<div class="toolrow">${classSelect()}<input id="ass-title" value="Ôn tập Toán 4 – tuần này" aria-label="Tên bài giao"><select id="skill-filter"><option value="">Tất cả chủ đề</option>${(state.boot?.skills||[]).map(s=>`<option>${esc(s)}</option>`).join('')}</select><select id="level-filter"><option value="0">Tất cả mức độ</option><option value="1">Nhận biết</option><option value="2">Thông hiểu</option><option value="3">Vận dụng</option></select></div><div class="toolrow right-align"><span class="note" id="selected-count">0 câu được chọn</span>${button('Giao bài đã chọn','submit-assignment')}</div><div class="questions-grid" id="questions-grid">${questionCards(q)}</div>`)}${state.class?panel('Bài đã giao',state.class.assignments.length?state.class.assignments.map(a=>`<div class="class-row"><span class="row-icon">${icon('clipboard')}</span><span><strong>${esc(a.title)}</strong><small>${a.question_count} câu · ${strDate(a.created_at)}</small></span></div>`).join(''):empty('Chưa giao bài','Hãy chọn câu hỏi từ ngân hàng bên trên.')):''}`}
+function viewAssign(){let q=state.questions;return `${title('Giao bài Toán 4','Thiết kế nhiệm vụ theo chủ đề và mức độ; học sinh làm bài trực tuyến.')}${panel('Tạo nhiệm vụ mới',`<div class="toolrow">${classSelect()}<input id="ass-title" value="Ôn tập Toán 4 – tuần này" aria-label="Tên bài giao"><select id="skill-filter"><option value="">Tất cả chủ đề</option>${(state.boot?.skills||[]).map(s=>`<option>${esc(s)}</option>`).join('')}</select><select id="level-filter"><option value="0">Tất cả mức độ</option><option value="1">Nhận biết</option><option value="2">Thông hiểu</option><option value="3">Vận dụng</option></select></div><div class="toolrow right-align"><span class="note" id="selected-count">0 câu được chọn</span>${button('Giao bài đã chọn','submit-assignment')}</div><div class="questions-grid" id="questions-grid">${questionCards(q)}</div>`)}${state.class?panel('Bài đã giao',state.class.assignments.length?state.class.assignments.map(a=>`<div class="class-row"><span class="row-icon">${icon('clipboard')}</span><span><strong>${esc(a.title)}</strong><small>${a.question_count} câu · ${strDate(a.created_at)}</small></span><button class="text-button delete-action" data-action="delete-assignment" data-id="${a.id}">Xóa bài giao</button></div>`).join(''):empty('Chưa giao bài','Hãy chọn câu hỏi từ ngân hàng bên trên.')):''}`}
 function questionCards(qs){return qs.map(q=>`<label class="question-card" data-skill="${esc(q.skill)}" data-level="${q.level}"><div class="q-top"><input class="q-select" type="checkbox" value="${q.id}"><span>${badge(q.skill)} ${badge(['','Nhận biết','Thông hiểu','Vận dụng'][q.level])}</span><small>#${q.id}</small></div><strong>${esc(q.prompt)}</strong><small>${q.options.map((v,i)=>`<span>${'ABCD'[i]}. ${esc(v)}</span>`).join('')}</small></label>`).join('')}
 function viewAI(){return `${title('Trợ lý giảng dạy Gemini','Phân tích học tập, đề xuất can thiệp và soạn học liệu — giáo viên kiểm duyệt trước khi dùng.')}${hero('AI hỗ trợ quyết định sư phạm','Phân tích dữ liệu theo kỹ năng, thiết kế hoạt động bám sát năng lực từng học sinh.')}
 <div class="two-columns ai-columns">${panel('Thiết lập phân tích',`<div class="stack"><label>Chọn tác vụ<select id="ai-type"><option value="class">Phân tích kết quả cả lớp</option><option value="student">Phân tích một học sinh</option><option value="worksheet">Soạn phiếu luyện tập Toán 4</option><option value="test">Kiểm tra kết nối Gemini</option></select></label><label>Lớp học${classSelect()}</label><label>Mã hồ sơ học sinh<select id="ai-student"><option value="">— Chọn học sinh —</option>${(state.class?.students||[]).map(s=>`<option value="${s.id}">${esc(s.code)} — ${esc(s.name)}</option>`).join('')}</select></label><label>Chủ đề<select id="ai-topic">${(state.boot?.skills||[]).map(s=>`<option>${esc(s)}</option>`).join('')}</select></label><label>Mức độ<select id="ai-level"><option>Củng cố</option><option>Thông hiểu</option><option>Vận dụng</option></select></label><label>Yêu cầu thêm (không nhập thông tin riêng của HS)<textarea id="ai-note" rows="3" placeholder="Ví dụ: tạo 8 câu từ dễ đến khó, có đáp án và hướng dẫn..."></textarea></label>${button(icon('spark',18)+' Phân tích bằng Gemini','run-ai')}</div><p class="note">Giới hạn tối đa 30 lượt AI/ngày/tài khoản GV; dữ liệu gửi AI dùng mã học sinh và kết quả học tập đã lược bỏ tên.</p>`)}${panel('Kết quả AI',`<div class="ai-result" id="ai-result">${state.aiText?formatAI(state.aiText):empty('Sẵn sàng hỗ trợ','Chọn tác vụ ở bên trái và nhấn Phân tích bằng Gemini để nhận nội dung.')}</div><div class="toolrow right-align">${button('Sao chép nội dung','copy-ai','secondary')}${button('Đã duyệt • Lưu nhận xét','approve-ai','secondary')}${button('In / lưu PDF','print-ai','secondary')}</div>`)} </div>`}
-function formatAI(s){return '<div class="ai-document">'+esc(s).split('\n').map(x=>{if(/^#{1,4}\s*/.test(x))return `<h3>${x.replace(/^#{1,4}\s*/,'').replaceAll('**','')}</h3>`;if(!x.trim())return '<div class="linebreak"></div>';return `<p>${x.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^[-*]\s/,'• ')}</p>`}).join('')+'</div>'}
+// Trình bày kết quả Gemini dưới dạng HTML an toàn: luôn escape trước khi thêm thẻ.
+// Hỗ trợ cả phiếu mới (văn bản thuần) và kết quả cũ có Markdown.
+function formatAI(raw){
+ const lines=String(raw??'').replace(/\r\n?/g,'\n').split('\n');
+ let html=['<article class="ai-document">'];let list=false,paragraph=[];
+ const inline=text=>{
+  let x=esc(text.trim());
+  x=x.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>')
+     .replace(/__([^_\n]+)__/g,'<strong>$1</strong>')
+     .replace(/(^|\s)\*([^*\n]+)\*(?=\s|$|[.,;:!])/g,'$1<em>$2</em>')
+     .replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  // Nhấn mạnh các nhãn sư phạm như "Tình trạng dữ liệu:".
+  return x.replace(/^([^<>:\n]{3,65}:)(\s|$)/,(all,label,space)=>{
+   if(/^https?:/i.test(label))return all;
+   return `<strong>${label}</strong>${space}`;
+  });
+ };
+ const endParagraph=()=>{if(paragraph.length){html.push(`<p>${paragraph.map(inline).join(' ')}</p>`);paragraph=[]}};
+ const endList=()=>{if(list){html.push('</ul>');list=false}};
+ for(let i=0;i<lines.length;i++){
+  let line=lines[i].trim();
+  if(!line || /^(?:-{3,}|\*{3,}|_{3,})$/.test(line)){
+   endParagraph();endList();continue;
+  }
+  if(/^```/.test(line))continue;
+  const md=line.match(/^#{1,6}\s+(.+)$/);
+  if(md)line=md[1].trim();
+  const bullet=line.match(/^(?:[-*+•●▪‣])\s+(.+)$/);
+  if(bullet){endParagraph();if(!list){html.push('<ul>');list=true}html.push(`<li>${inline(bullet[1])}</li>`);continue}
+  endList();
+  const answerHeading=/^(?:\d+[.)]\s*)?(?:ĐÁP ÁN|HƯỚNG DẪN CHẤM|LỜI GIẢI)(?:\b|\s|\()/i.test(line);
+  const numbered=/^\d{1,2}[.)]\s+\S/.test(line);
+  const upper=line.length<110&&/[A-ZÀ-Ỹ]/u.test(line)&&line===line.toLocaleUpperCase('vi-VN')&&!/[.!?]$/.test(line);
+  if(md||answerHeading||numbered||upper){
+   endParagraph();
+   const heading=line.replace(/^\*\*(.*?)\*\*$/,'$1').replace(/\*\*/g,'');
+   const klass=answerHeading?' class="ai-answers"':'';
+   html.push(`<h2${klass}>${inline(heading)}</h2>`);
+   continue;
+  }
+  if(/^(?:Lưu ý|Chú ý|Khuyến nghị):\s*/i.test(line)){
+   endParagraph();html.push(`<aside class="ai-note">${inline(line)}</aside>`);continue;
+  }
+  // Dòng nội dung được tách ra thành đoạn riêng khi trước đó là câu có dấu kết thúc.
+  if(paragraph.length&&/[.!?;:]$/.test(paragraph[paragraph.length-1]))endParagraph();
+  paragraph.push(line);
+ }
+ endParagraph();endList();html.push('</article>');return html.join('');
+}
 function viewReport(){if(!state.report)return `${title('Báo cáo và phiếu học tập','Theo dõi tiến bộ theo dữ liệu; in phiếu nhanh từ ngân hàng Toán 4.')}${panel('Báo cáo lớp',`<div class="toolrow">${classSelect()} ${button('Xem báo cáo','load-report')}</div>${empty('Chưa mở báo cáo','Chọn lớp rồi nhấn Xem báo cáo.')}`)}`;const d=state.report;return `${title('Báo cáo và phiếu học tập','Xuất báo cáo, thống kê kỹ năng và in phiếu theo lớp.')}${panel('Báo cáo lớp',`<div class="toolrow">${classSelect()} ${button('Cập nhật báo cáo','load-report','secondary')}${button('Xuất CSV','export-report')}${button('In / lưu PDF','print-report','secondary')}</div><div class="mini-stats"><div><small>Số học sinh</small><strong>${d.students.length}</strong></div><div><small>Lượt làm bài</small><strong>${d.students.reduce((a,s)=>a+s.attempts.length,0)}</strong></div></div><div class="table-wrap"><table><thead><tr><th>Mã HS</th><th>Họ tên</th><th>Lượt luyện</th><th>Điểm gần nhất</th><th>Kỹ năng cần củng cố</th><th>Điểm kiểm tra</th></tr></thead><tbody>${d.students.map(s=>`<tr><td>${esc(s.code)}</td><td>${esc(s.name)}</td><td>${s.attempts.length}</td><td>${s.attempts[0]?.score??'—'}</td><td>${s.weak.slice(0,2).map(v=>esc(v.skill)+` (${v.accuracy}%)`).join(', ')||'Chưa có'}</td><td>${s.grades.slice(-2).map(g=>`${g.score}/${g.max_score}`).join(' → ')||'—'}</td></tr>`).join('')}</tbody></table></div>`)}${panel('Tạo phiếu ôn tập để in',`<div class="toolrow"><select id="print-skill">${state.boot.skills.map(s=>`<option>${esc(s)}</option>`).join('')}</select><select id="print-level"><option value="0">Từ dễ đến khó</option><option value="1">Nhận biết</option><option value="2">Thông hiểu</option><option value="3">Vận dụng</option></select>${button(icon('printer',18)+' Tạo phiếu','make-sheet')}</div><p class="note">Phiếu từ ngân hàng câu hỏi đã biên soạn; giáo viên kiểm tra trước khi phát cho học sinh.</p>`)} `}
 function viewStudentDashboard(){const d=state.student||{assignments:[],history:[],student:{name:state.me.user.name}};let latest=d.history[0];return `${title('Xin chào, '+esc(d.student.name)+'!','Mỗi ngày một chút tiến bộ. Sẵn sàng khám phá Toán lớp 4 nào!')}${hero('Hành trình Toán học của em','Làm bài, nhận phản hồi và ôn luyện các kỹ năng cần củng cố.')}
 <div class="stat-grid student-stats"><div class="stat">${icon('clipboard')}<small>Bài đã hoàn thành</small><strong>${d.history.length}</strong><span>Những bước tiến của em</span></div><div class="stat">${icon('chart')}<small>Điểm lần gần nhất</small><strong>${latest?latest.score:'—'}<span>/10</span></strong><span>Tiếp tục cố gắng nhé!</span></div><div class="stat">${icon('book')}<small>Kỹ năng ôn tập</small><strong>${latest?Object.keys(latest.per||{}).length:0}</strong><span>Chủ đề Toán lớp 4</span></div></div><div class="two-columns">${panel('Bài tập cô giáo đã giao',d.assignments.length?d.assignments.map(a=>`<div class="class-row"><span class="row-icon">${icon('book')}</span><span><strong>${esc(a.title)}</strong><small>${a.questions_count} câu • ${a.completed?'Đã hoàn thành':'Chưa làm'}</small></span>${a.completed?badge('Hoàn thành'):button('Làm bài','start-quiz-'+a.id)}</div>`).join(''):empty('Chưa có bài mới','Em có thể luyện tập ở mục Ôn luyện cá nhân hóa.'))}${panel('Ôn tập theo năng lực',`<p class="muted">Bài luyện được chọn dựa trên những kỹ năng em còn cần củng cố. Mỗi lượt sẽ có đáp án và giải thích sau khi nộp.</p>${button('Bắt đầu ôn tập','start-practice')}<div class="learning-steps"><span>1. Làm bài</span><span>2. Xem lỗi</span><span>3. Luyện lại</span></div>`)} </div>`}
@@ -52,23 +100,86 @@ async function importFile(e){await act(async()=>{let file=e.target.files[0];if(!
 function parseImport(){const raw=state.importRows;const head=raw[0].map(normalize);const pick=(...keys)=>head.findIndex(h=>keys.some(k=>h===k||h.includes(k)));let iCode=pick('mahs','mahocsinh','studentcode','id'),iName=pick('hoten','tenhocsinh','hovaten','name'),iPin=pick('pin','matkhau'),iScore=pick('diem','score'),iMax=pick('diemtoida','thangdiem','maxscore');let type=$('#import-type').value;
  if(iCode<0)throw Error('File thiếu cột Mã HS');if(type==='students'){if(iName<0)throw Error('File thiếu cột Họ tên');return {type,students:raw.slice(1).map(r=>({code:r[iCode],name:r[iName],pin:iPin>=0?r[iPin]:''})).filter(x=>x.code&&x.name).slice(0,100)}}
  if(iScore<0)throw Error('File thiếu cột Điểm');return {type,rows:raw.slice(1).map(r=>({code:r[iCode],score:Number(r[iScore]),max_score:iMax>=0?Number(r[iMax]):10})).filter(x=>x.code&&Number.isFinite(x.score)).slice(0,300)} }
+function jsonDownload(data,filename){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+// Canh bao khong the khoi phuc va yeu cau nhap dung ma xac nhan.
+function requireDeletionConsent(subject,code,details){
+ const typed=prompt(`CẢNH BÁO: XÓA VĨNH VIỄN\n\n${subject}\n${details}\n\nNhập chính xác mã ${code} để xác nhận:`);
+ return typed!==null&&typed.trim()===code;
+}
 function csvDownload(content,filename){const blob=new Blob(['\ufeff'+content],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),300)}
 function csv(v){return '"'+String(v??'').replaceAll('"','""')+'"'}
 function printDocument(content,titleText){const win=window.open('','_blank');if(!win){toast('Cho phép trình duyệt mở cửa sổ để in',true);return}win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(titleText)}</title><style>body{font:15px/1.7 Arial,sans-serif;max-width:850px;margin:40px auto;color:#17243a}h1,h2,h3{color:#174a91}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bac7d5;padding:8px;font-size:13px}@media print{button{display:none}}</style></head><body>${content}<script>onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);win.document.close()}
 async function handleAction(a,node){if(a==='tab-teacher'||a==='tab-student'){state.roleTab=a.split('-')[1];render();return}if(a==='toggle-menu'){document.querySelector('.sidebar')?.classList.toggle('open');return}if(a==='logout'){await api('/auth/logout',{method:'POST',body:{}});state.me={user:null};state.view='dashboard';render();return}
+ if(a==='backup-class'){
+  if(!state.cls)throw Error('Hãy chọn lớp học trước.');
+  let d=await api('/teacher/backup-class?class_id='+encodeURIComponent(state.cls));
+  jsonDownload(d,'AI_LEARNPATH_SAO_LUU_'+d.class.code+'_'+new Date().toISOString().slice(0,10)+'.json');
+  toast('Đã xuất bản sao dữ liệu lớp (không có PIN). Hãy bảo quản tệp an toàn.');return;
+ }
+ if(a==='delete-student'||a==='clear-student-data'){
+  const s=state.class?.students.find(x=>x.id===node?.dataset.id);if(!s)throw Error('Học sinh không còn trong lớp hiện tại.');
+  const removing=a==='delete-student';
+  const desc=removing?'Sẽ xóa tài khoản HS, toàn bộ điểm, bài làm và nhận xét gắn với HS; HS sẽ không đăng nhập được nữa.':'Chỉ xóa điểm, bài làm, bài ôn đang mở và nhận xét gắn với HS; tài khoản HS và mã PIN vẫn được giữ.';
+  if(!requireDeletionConsent(`${s.code} — ${s.name}`,s.code,desc))return;
+  await api(removing?'/teacher/student':'/teacher/student-data',{method:'DELETE',body:{student_id:s.id,confirm_code:s.code}});
+  state.report=null;await refreshTeacher();toast(removing?'Đã xóa học sinh và dữ liệu liên quan.':'Đã xóa kết quả học tập; giữ nguyên tài khoản HS.');return;
+ }
+ if(a==='clear-class-data'||a==='delete-class'){
+  const c=state.class?.class;if(!c)throw Error('Hãy chọn lớp trước.');
+  const removing=a==='delete-class';
+  const desc=removing?'Sẽ xóa lớp, tất cả tài khoản học sinh, các bài đã giao và mọi kết quả/nhận xét gắn với lớp.':'Xóa toàn bộ bài làm, điểm kiểm tra và nhận xét đã duyệt của lớp, nhưng vẫn giữ học sinh và bài đã giao.';
+  if(!requireDeletionConsent(`${c.name} — ${c.code}`,c.code,desc))return;
+  await api(removing?'/teacher/class':'/teacher/class-results',{method:'DELETE',body:{class_id:c.id,confirm_code:c.code}});
+  if(removing)state.cls=null;
+  state.report=null;await refreshTeacher();toast(removing?'Đã xóa lớp và toàn bộ dữ liệu liên quan.':'Đã xóa dữ liệu kết quả học tập của lớp.');return;
+ }
+ if(a==='delete-assignment'){
+  const aRow=state.class?.assignments.find(x=>x.id===node?.dataset.id);if(!aRow)throw Error('Không tìm thấy bài giao.');
+  if(!requireDeletionConsent(`Bài giao: ${aRow.title}`,aRow.title,'Xóa bài đã giao và mọi lượt nộp của bài đó; điểm bài luyện cá nhân khác vẫn được giữ.'))return;
+  await api('/teacher/assignment',{method:'DELETE',body:{assignment_id:aRow.id,confirm_title:aRow.title}});
+  state.report=null;await refreshTeacher();toast('Đã xóa bài giao và các lượt nộp liên quan.');return;
+ }
  if(a==='create-class'){let name=prompt('Tên lớp mới (ví dụ: Lớp Bốn A2):');if(!name)return;let c=await api('/teacher/classes',{method:'POST',body:{name}});state.cls=c.id;await refreshTeacher();toast(`Đã tạo lớp. Mã lớp: ${c.code}`);return}
  if(a==='add-students'){if(!state.cls)throw Error('Chọn hoặc tạo lớp trước');let data=prompt('Nhập danh sách theo dạng: HS01|Nguyễn Văn A|123456, mỗi học sinh một dòng. PIN có thể để trống.');if(!data)return;let students=data.split(/\r?\n/).map(r=>{const [code,name,pin]=r.split('|');return {code,name,pin}});let r=await api('/teacher/students',{method:'POST',body:{class_id:state.cls,students}});await refreshTeacher();toast(`Đã nhập ${r.count} học sinh. Hãy lưu PIN trong danh sách được cấp.`);if(r.inserted.length)printDocument(`<h2>Danh sách mã truy cập học sinh</h2><p> Mã lớp: <b>${esc(r.class_code)}</b></p><table><tr><th>Mã HS</th><th>Họ tên</th><th>PIN</th></tr>${r.inserted.map(s=>`<tr><td>${esc(s.code)}</td><td>${esc(s.name)}</td><td>${esc(s.pin)}</td></tr>`).join('')}</table>`,'Mã truy cập học sinh');return}
  if(a==='seed'){if(!state.cls)throw Error('Chọn lớp trước');if(!confirm('Thêm 34 tài khoản học sinh giả định để thử nghiệm?'))return;let r=await api('/teacher/seed',{method:'POST',body:{class_id:state.cls}});await refreshTeacher();toast(`Đã tạo ${r.count} hồ sơ minh họa`);return}
  if(a==='commit-import'){if(!state.cls)throw Error('Chọn lớp trước');let d=parseImport();let r=await api(d.type==='students'?'/teacher/students':'/teacher/grades',{method:'POST',body:d.type==='students'?{class_id:state.cls,students:d.students}:{class_id:state.cls,label:$('#import-label').value,rows:d.rows}});await refreshTeacher();toast(`Đã nhập ${r.count??r.inserted.length} bản ghi`);if(r.inserted){printDocument(`<h2>Danh sách truy cập</h2><p>Mã lớp: ${esc(r.class_code)}</p><table><tr><th>Mã HS</th><th>Họ tên</th><th>PIN</th></tr>${r.inserted.map(s=>`<tr><td>${esc(s.code)}</td><td>${esc(s.name)}</td><td>${esc(s.pin)}</td></tr>`).join('')}</table>`,'Mã đăng nhập')};return}
  if(a==='template'){csvDownload('Mã HS,Họ tên,PIN\nHS01,Học sinh 01,123456\nHS02,Học sinh 02,234567','MAU_NHAP_HOC_SINH.csv');return}
  if(a==='submit-assignment'){if(!state.cls)throw Error('Chọn lớp trước');let ids=[...document.querySelectorAll('.q-select:checked')].map(x=>Number(x.value));let title=$('#ass-title').value;let r=await api('/teacher/assignments',{method:'POST',body:{class_id:state.cls,title,question_ids:ids}});await refreshTeacher();state.view='assign';render();toast(`Đã giao ${r.question_count} câu đến lớp. Học sinh đăng nhập để làm bài.`);return}
- if(a==='run-ai'){if(state.aiBusy)return;let type=$('#ai-type').value,body={type,class_id:state.cls,student_id:$('#ai-student').value,topic:$('#ai-topic').value,level:$('#ai-level').value,note:$('#ai-note').value};state.aiBusy=true;state.aiText='';$('#ai-result').innerHTML='<div class="loading">Gemini đang phân tích, vui lòng chờ...</div>';try{let r=await api('/ai/teacher',{method:'POST',body});state.aiText=r.text;$('#ai-result').innerHTML=formatAI(r.text);toast('Gemini đã trả về kết quả; giáo viên vui lòng rà soát nội dung.')}finally{state.aiBusy=false}return}
+ if(a==='run-ai'){if(state.aiBusy)return;let type=$('#ai-type').value,body={type,class_id:state.cls,student_id:$('#ai-student').value,topic:$('#ai-topic').value,level:$('#ai-level').value,note:$('#ai-note').value};state.aiBusy=true;state.aiText='';$('#ai-result').innerHTML='<div class="loading">Gemini đang phân tích, vui lòng chờ...</div>';try{let r=await api('/ai/teacher',{method:'POST',body});state.aiText=r.text;state.aiTaskType=type;$('#ai-result').innerHTML=formatAI(r.text);toast('Gemini đã trả về kết quả; giáo viên vui lòng rà soát nội dung.')}finally{state.aiBusy=false}return}
  if(a==='approve-ai'){if(!state.aiText)throw Error('Chưa có nội dung để phê duyệt');
   if(!confirm('Xác nhận giáo viên đã kiểm tra tính chính xác và phê duyệt nội dung này?'))return;
   await api('/teacher/notes',{method:'POST',body:{content:state.aiText,kind:'Gemini đã duyệt',class_id:state.cls||null}});
   toast('Đã lưu nhận xét do giáo viên phê duyệt.');return}
  if(a==='copy-ai'){if(!state.aiText)throw Error('Chưa có kết quả AI');await navigator.clipboard.writeText(state.aiText);toast('Đã sao chép nội dung');return}
- if(a==='print-ai'){if(!state.aiText)throw Error('Chưa có kết quả AI');printDocument(`<h1>PHIẾU HỖ TRỢ TOÁN 4</h1>${formatAI(state.aiText)}`,'Phiếu AI LearnPath');return}
+ if(a==='print-ai'){
+  if(!state.aiText)throw Error('Chưa có kết quả AI');
+  const task=state.aiTaskType||'class';
+  const titles={class:'PHIẾU PHÂN TÍCH KẾT QUẢ HỌC TẬP',student:'PHIẾU HỖ TRỢ HỌC TẬP CÁ NHÂN',worksheet:'PHIẾU LUYỆN TẬP TOÁN 4',test:'KIỂM TRA KẾT NỐI AI'};
+  const docTitle=titles[task]||'PHIẾU HỖ TRỢ TOÁN 4';
+  const className=esc(state.class?.class?.name||state.class?.name||'.............................');
+  const date=new Date().toLocaleDateString('vi-VN');
+  const css=`<style>
+  @page{size:A4;margin:18mm 17mm 17mm 22mm}
+  body{max-width:none!important;margin:0!important;color:#111!important}
+  .ai-printout{font-family:'Times New Roman',serif;font-size:13pt;line-height:1.55;color:#111}
+  .ai-printout h1{font:700 15pt/1.4 'Times New Roman',serif;color:#111;text-align:center;margin:7mm 0 3mm}
+  .ai-printout .print-meta{font-size:12pt;border-bottom:1px solid #777;padding-bottom:3mm;margin-bottom:5mm}
+  .ai-printout .ai-document{font-size:13pt}
+  .ai-printout .ai-document h2{font:700 13.5pt/1.4 'Times New Roman',serif;color:#111;margin:5mm 0 2mm;break-after:avoid}
+  .ai-printout .ai-document p{font-size:13pt;line-height:1.5;white-space:normal;margin:2mm 0}
+  .ai-printout .ai-document ul{margin:2mm 0 3mm 7mm;padding:0}
+  .ai-printout .ai-document li{padding-left:1mm;margin:1mm 0;break-inside:avoid}
+  .ai-printout .ai-document .ai-note{border:1px solid #999;padding:3mm;margin:4mm 0;break-inside:avoid}
+  .ai-printout .ai-document .ai-answers{break-before:page;margin-top:0;text-align:center}
+  .ai-printout .print-footer{margin-top:9mm;display:flex;justify-content:space-between;font-size:12pt;break-inside:avoid}
+  .ai-printout .print-signature{text-align:center;min-width:60mm}
+  .ai-printout .print-signature strong{display:block;margin-bottom:22mm}
+  @media print{.ai-printout *{box-shadow:none!important}}
+  </style>`;
+  const header=`<div class="ai-printout">${css}<h1>${docTitle}</h1><div class="print-meta">Lớp: ${className} &nbsp;&nbsp;&nbsp; Ngày lập: ${esc(date)}${task==='worksheet'?'<p>Họ và tên học sinh: .....................................................................</p>':''}</div>`;
+  const footer=`<div class="print-footer"><span><em>Nội dung do AI hỗ trợ, giáo viên kiểm duyệt trước khi sử dụng.</em></span><div class="print-signature"><strong>GIÁO VIÊN</strong></div></div></div>`;
+  printDocument(header+formatAI(state.aiText)+footer,docTitle);return;
+ }
  if(a==='load-report'){if(!state.cls)throw Error('Chọn lớp trước');state.report=await api('/teacher/report?class_id='+encodeURIComponent(state.cls));render();return}
  if(a==='export-report'){let d=state.report;if(!d)throw Error('Chưa mở báo cáo');let lines=[['Mã HS','Họ tên','Số lượt bài','Điểm mới nhất','Kỹ năng cần ôn','Điểm kiểm tra'].map(csv).join(',')];for(let s of d.students)lines.push([s.code,s.name,s.attempts.length,s.attempts[0]?.score??'',s.weak.slice(0,3).map(x=>x.skill).join(' / '),s.grades.slice(-2).map(g=>g.score).join(' → ')].map(csv).join(','));csvDownload(lines.join('\n'),'BAO_CAO_AI_LEARNPATH_'+Date.now()+'.csv');return}
  if(a==='print-report'){if(!state.report)throw Error('Chưa mở báo cáo');printDocument(`<h1>Báo cáo kết quả ${esc(state.report.class.name)}</h1>${$('.table-wrap').outerHTML}`,'Báo cáo lớp');return}
