@@ -24,3 +24,30 @@
 .btn.danger{background:#fff1f2;color:#ab2835;border:1px solid #fac8cf}
 .btn.danger:hover,.delete-action:hover{background:#ffe0e4!important}
 @media(max-width:740px){.student-actions{min-width:unset;flex-direction:column;align-items:flex-start}.manage-tools{flex-direction:column}.manage-tools .btn{width:100%}}
+
+/* Cap nhat ho so tai khoan va trang dang nhap (giao vien / hoc sinh). */
+.brand-button{border:0;background:transparent;padding:0;text-align:left;width:100%;color:inherit;display:flex;align-items:center;gap:10px;cursor:pointer}
+.brand-button:hover{filter:brightness(1.08)}
+.profile-shortcut,.breadcrumb-action{border:0;background:transparent;text-align:left;cursor:pointer;color:inherit;display:inline-flex;align-items:center;gap:8px}
+.profile-shortcut{width:100%;padding:9px 13px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1px;color:#93b5d7}
+.profile-shortcut:hover{background:#ffffff18;color:#fff}
+.breadcrumb-action{font:inherit;letter-spacing:inherit;font-weight:600}
+.breadcrumb-action:hover{color:#1579df}
+.avatar-action{display:inline-flex;justify-content:center;align-items:center;border:0;cursor:pointer}
+.avatar-action:hover{outline:2px solid #6ba9f3}
+.password-input-wrap{position:relative;display:block}
+.password-input-wrap input{width:100%;padding-right:72px!important}
+.password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);border:0;background:#eaf3ff;color:#1262af;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.password-toggle:hover{background:#d8e9ff}
+.register-success{border:1px solid #89d7b7;background:#eaf9f2;color:#145b40;border-radius:11px;padding:12px 16px;margin:12px 0 14px;font-size:13px;line-height:1.6;font-weight:600}
+.profile-form{max-width:950px}
+.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 21px;margin:12px 0 18px}
+.profile-grid label,.profile-credential label{display:flex;flex-direction:column;gap:7px;font-size:13px;color:#234363;font-weight:600}
+.profile-grid input,.profile-grid textarea,.profile-credential input{width:100%;border:1px solid #d1e2f6;border-radius:10px;background:#fff;color:#102a4c;padding:11px 13px;min-height:43px;outline:none}
+.profile-grid input:focus,.profile-grid textarea:focus,.profile-credential input:focus{border-color:#1b8ce0;box-shadow:0 0 0 3px #1b8ce015}
+.profile-grid input[readonly]{background:#f0f5fc;color:#6c8199;cursor:not-allowed}
+.profile-grid .wide-field{grid-column:1/-1}
+.profile-grid textarea{resize:vertical}
+.profile-credential{max-width:480px}
+.profile-credential .password-label{max-width:100%}
+@media(max-width:650px){.profile-grid{grid-template-columns:1fr}.profile-grid .wide-field{grid-column:auto}.breadcrumb-action{font-size:10px}}
