@@ -18,6 +18,21 @@ async function verify(pass,stored){if(!stored||!stored.includes(':'))return fals
 const sessionCookie=(token,maxAge)=>`lp_session=${token||''}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 const QBYID=new Map(QUESTIONS.map(q=>[q.id,q]));
 
+// Chuẩn nội dung phiếu: trả văn bản có cấu trúc, không cho mô hình tạo HTML.
+// Giao diện sẽ chuyển đổi văn bản sang HTML an toàn và định dạng in A4.
+const AI_PRINT_RULES = `QUY CHUẨN TRÌNH BÀY ĐỂ HIỂN THỊ VÀ IN A4:
+- Viết bằng tiếng Việt chuẩn, rõ ràng, không dùng lời chào dài hoặc câu dẫn chung chung.
+- Chỉ trả văn bản thuần, TUYỆT ĐỐI KHÔNG trả HTML, JSON hay Markdown.
+- Không dùng dấu sao (*), dấu thăng (#), ba dấu gạch ngang (---), dấu gạch dưới (_) hoặc dấu nháy ngược để trang trí.
+- Không tự đặt thêm tiêu đề lớn vì website sẽ tự thêm tiêu đề khi in. Bắt đầu ngay bằng các đề mục ở dòng riêng, đánh số dạng "1. Nhận xét dữ liệu", "2. Kỹ năng cần củng cố".
+- Dùng ký hiệu "• " đầu dòng cho các ý nhỏ. Nếu có nhãn, dùng "Tên nội dung: giải thích"; không dùng chữ in đậm theo Markdown.
+- Mỗi đoạn ngắn gọn, không tạo bảng bằng ký tự |, không lặp lời nhắc kỹ thuật hoặc chú giải hệ thống.
+- Phân biệt số liệu thực tế với nhận định gợi ý. Không suy diễn về toàn lớp nếu số mẫu quá ít. Không tạo số liệu, tên học sinh, điểm số hoặc kết luận không có trong dữ liệu.
+- Ưu tiên cách diễn đạt sư phạm tích cực, có hoạt động cụ thể và tiêu chí đánh giá lại có thể kiểm chứng.
+- Trong bài tập Toán, dấu chia (/), phân số, phép tính, dấu bằng và ký hiệu toán học phải giữ nguyên khi cần; không được xóa ký hiệu toán chỉ để trang trí.
+- Mỗi phiếu kết thúc bằng câu: "Lưu ý: Giáo viên cần kiểm tra và điều chỉnh nội dung trước khi sử dụng."`;
+
+
 export class LearnPathDB {
  constructor(state,env){this.state=state;this.env=env;this.sql=state.storage.sql;state.blockConcurrencyWhile(async()=>{
   const s=this.sql;
@@ -39,6 +54,22 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
  studentOwned(sid,teacher){let s=first(this.sql,'SELECT s.* FROM students s JOIN classes c ON c.id=s.class_id WHERE s.id=? AND c.teacher_id=?',sid,teacher.id);if(!s)bad('Không tìm thấy học sinh',404);return s}
  studentHistory(sid){return rows(this.sql,'SELECT * FROM attempts WHERE student_id=? ORDER BY created_at DESC LIMIT 30',sid).map(a=>({id:a.id,kind:a.kind,assignment_id:a.assignment_id,created_at:a.created_at,...parse(a.result)}));}
  studentProfile(s,includeName=false){let hist=this.studentHistory(s.id);let g=rows(this.sql,'SELECT label,score,max_score,created_at FROM grades WHERE student_id=? ORDER BY created_at',s.id);return {id:s.id,code:s.code,name:includeName?s.name:undefined,attempts:hist,grades:g,weak:weakSkills(hist),total:hist.length}}
+ // Chi thao tac SQL dong bo trong giao dich; khong dung await trong pham vi transactionSync.
+ atomic(fn){return typeof this.state.storage.transactionSync==='function'?this.state.storage.transactionSync(fn):fn()}
+ clearStudentRecords(sid,removePersonalNotes=true){
+  let sql=this.sql;
+  sql.exec('DELETE FROM attempts WHERE student_id=?',sid);
+  sql.exec('DELETE FROM grades WHERE student_id=?',sid);
+  sql.exec('DELETE FROM quiz_issues WHERE student_id=?',sid);
+  if(removePersonalNotes)sql.exec('DELETE FROM approved_notes WHERE student_id=?',sid);
+ }
+ deleteStudentCompletely(sid){
+  this.clearStudentRecords(sid);
+  this.sql.exec('DELETE FROM sessions WHERE role=? AND user_id=?','student',sid);
+  this.sql.exec('DELETE FROM ai_usage WHERE key=?','s:'+sid);
+  this.sql.exec('DELETE FROM students WHERE id=?',sid);
+ }
+ confirmCode(actual,provided){if(!actual||safe(provided,100)!==actual)bad('Mã xác nhận chưa đúng. Không có dữ liệu nào bị xóa.',400)}
  async fetch(req){try{return await this.route(req)}catch(e){return json({error:e.message||'Lỗi xử lý',code:e.status||500},e.status||500)}}
  async route(req){const sql=this.sql, url=new URL(req.url), path=url.pathname,method=req.method;
   if(method==='GET'&&path==='/api/bootstrap')return json({has_admin:!!first(sql,'SELECT id FROM teachers LIMIT 1'),skills:SKILLS,questions_count:QUESTIONS.length});
@@ -90,6 +121,51 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
     let assignments=rows(sql,'SELECT id,title,created_at,question_ids FROM assignments WHERE class_id=? ORDER BY created_at DESC',c.id).map(a=>({...a,question_count:parse(a.question_ids).length||JSON.parse(a.question_ids).length}));
     return json({class:c,students,assignments});
    }
+   // Sao luu lop hoc: chi giao vien so huu lop moi duoc truy xuat; khong bao gio xuat hash PIN, mat khau hay phien.
+   if(method==='GET'&&path==='/api/teacher/backup-class'){
+    const c=this.owned(url.searchParams.get('class_id'),u);
+    const students=rows(sql,'SELECT id,code,name,created_at FROM students WHERE class_id=? ORDER BY code',c.id);
+    const assignments=rows(sql,'SELECT id,title,question_ids,created_at FROM assignments WHERE class_id=? AND teacher_id=? ORDER BY created_at',c.id,u.id);
+    const attempts=rows(sql,`SELECT a.student_id,a.assignment_id,a.kind,a.answers,a.result,a.created_at FROM attempts a JOIN students s ON s.id=a.student_id WHERE s.class_id=? ORDER BY a.created_at`,c.id);
+    const grades=rows(sql,`SELECT g.student_id,g.label,g.score,g.max_score,g.created_at FROM grades g JOIN students s ON s.id=g.student_id WHERE s.class_id=? ORDER BY g.created_at`,c.id);
+    const notes=rows(sql,'SELECT student_id,kind,content,created_at FROM approved_notes WHERE teacher_id=? AND class_id=? ORDER BY created_at',u.id,c.id);
+    return json({format:'AI LearnPath 4.0 - Class backup v1',exported_at:now(),class:{id:c.id,name:c.name,code:c.code},students,assignments,attempts,grades,notes,note:'Tep luu du lieu ca nhan: bao quan can than. Khong bao gom PIN/mat khau; chua co tinh nang khoi phuc tu JSON.'});
+   }
+   // Xoa ho so HS / xoa rieng lich su / xoa du lieu cua ca lop: xac nhan ma o ca frontend va backend.
+   if(method==='DELETE'&&path==='/api/teacher/student'){
+    const d=await read(req),s=this.studentOwned(d.student_id,u);this.confirmCode(s.code,d.confirm_code);
+    this.atomic(()=>this.deleteStudentCompletely(s.id));return json({deleted:true,code:s.code,scope:'student'});
+   }
+   if(method==='DELETE'&&path==='/api/teacher/student-data'){
+    const d=await read(req),s=this.studentOwned(d.student_id,u);this.confirmCode(s.code,d.confirm_code);
+    const count=first(sql,'SELECT COUNT(*) AS n FROM attempts WHERE student_id=?',s.id).n;
+    this.atomic(()=>this.clearStudentRecords(s.id));return json({deleted:true,code:s.code,removed_attempts:count,scope:'student-results'});
+   }
+   if(method==='DELETE'&&path==='/api/teacher/class-results'){
+    const d=await read(req),c=this.owned(d.class_id,u);this.confirmCode(c.code,d.confirm_code);
+    const ids=rows(sql,'SELECT id FROM students WHERE class_id=?',c.id).map(x=>x.id);
+    this.atomic(()=>{
+     for(const id of ids)this.clearStudentRecords(id);
+     sql.exec('DELETE FROM approved_notes WHERE teacher_id=? AND class_id=?',u.id,c.id);
+    });return json({deleted:true,students_affected:ids.length,scope:'class-results'});
+   }
+   if(method==='DELETE'&&path==='/api/teacher/class'){
+    const d=await read(req),c=this.owned(d.class_id,u);this.confirmCode(c.code,d.confirm_code);
+    const ids=rows(sql,'SELECT id FROM students WHERE class_id=?',c.id).map(x=>x.id);
+    this.atomic(()=>{
+     for(const id of ids)this.deleteStudentCompletely(id);
+     sql.exec('DELETE FROM assignments WHERE class_id=? AND teacher_id=?',c.id,u.id);
+     sql.exec('DELETE FROM approved_notes WHERE teacher_id=? AND class_id=?',u.id,c.id);
+     sql.exec('DELETE FROM classes WHERE id=? AND teacher_id=?',c.id,u.id);
+    });return json({deleted:true,students_affected:ids.length,scope:'class'});
+   }
+   if(method==='DELETE'&&path==='/api/teacher/assignment'){
+    const d=await read(req),a=first(sql,`SELECT a.* FROM assignments a JOIN classes c ON c.id=a.class_id WHERE a.id=? AND c.teacher_id=? AND a.teacher_id=?`,safe(d.assignment_id,80),u.id,u.id);
+    if(!a)bad('Khong tim thay bai giao hoac khong co quyen xoa',404);
+    if(safe(d.confirm_title,100)!==a.title)bad('Ten bai giao xac nhan chua dung',400);
+    this.atomic(()=>{sql.exec('DELETE FROM attempts WHERE assignment_id=?',a.id);sql.exec('DELETE FROM assignments WHERE id=? AND teacher_id=?',a.id,u.id)});
+    return json({deleted:true,scope:'assignment'});
+   }
    if(method==='POST'&&path==='/api/teacher/students'){
     const d=await read(req),c=this.owned(d.class_id,u),arr=Array.isArray(d.students)?d.students:[];
     if(!arr.length||arr.length>100)bad('Hãy nhập từ 1 đến 100 học sinh/lần');let out=[];
@@ -132,7 +208,16 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
     if(type==='student'){let s=this.studentOwned(d.student_id,u);let p=this.studentProfile(s);prompt=`${guard}\nPhân tích hồ sơ ẩn danh ${s.code}. Dữ liệu: ${JSON.stringify({attempts:p.attempts.map(a=>({score:a.score,per:a.per,correct:a.correct,total:a.total})),grades:p.grades,weak:p.weak})}. Trình bày điểm mạnh, kỹ năng cần củng cố, 3 bài luyện vừa sức, cách giáo viên theo dõi. Không kết luận năng lực từ một lần kiểm tra.`}
     if(type==='worksheet'){let topic=safe(d.topic,60),level=safe(d.level,30),note=safe(d.note,250);prompt=`${guard}\nHãy tạo PHIẾU HỌC TẬP TOÁN 4 để in, chủ đề ${topic||'Phân số'}, mức độ ${level||'Củng cố'}, yêu cầu thêm ${note||'phù hợp chương trình Toán 4 Kết nối tri thức với cuộc sống'}. Gồm tiêu đề, chỗ ghi họ tên/lớp, 8 câu đa dạng với đáp án ở cuối và lời giải chính xác. Đây là bản nháp để giáo viên duyệt.`}
     if(type==='test')prompt=`${guard}\nChỉ trả lời ngắn gọn: Kết nối AI LearnPath với Gemini thành công.`;
-    const key='t:'+u.id;let lim=first(sql,'SELECT total FROM ai_usage WHERE key=? AND day=?',key,day());if((lim?.total||0)>=30)bad('Đã đạt giới hạn 30 lượt AI của giáo viên hôm nay',429);sql.exec('INSERT INTO ai_usage(key,day,total) VALUES(?,?,1) ON CONFLICT(key,day) DO UPDATE SET total=total+1',key,day());return json({__ai_request:true,prompt});
+    // Không sửa lời nhắc kiểm tra kết nối; các tác vụ tạo phiếu đều dùng quy chuẩn in.
+    if(type!=='test'){
+     const extra=type==='worksheet'
+      ? 'Phiếu ôn tập gồm 8 câu hỏi được đánh số rõ, phân hóa mức độ. Tạo mục cuối với nhan đề chính xác "ĐÁP ÁN VÀ HƯỚNG DẪN CHO GIÁO VIÊN"; cung cấp đáp án và giải thích từng câu. Đáp án cần in sang trang riêng.'
+      : type==='student'
+       ? 'Bố cục gồm: 1. Căn cứ dữ liệu; 2. Điểm mạnh đã quan sát; 3. Kỹ năng cần củng cố; 4. Hoạt động học tập; 5. Cách theo dõi tiến bộ. Không phán xét học sinh.'
+       : 'Bố cục gồm: 1. Phạm vi dữ liệu; 2. Kết quả nổi bật; 3. Kỹ năng cần củng cố; 4. Gợi ý tổ chức hoạt động; 5. Đánh giá lại. Nếu chỉ có một học sinh, ghi rõ chưa thể đại diện cả lớp.';
+     prompt+=`\n\n${AI_PRINT_RULES}\n${extra}`;
+    }
+    const key='t:'+u.id;let lim=first(sql,'SELECT total FROM ai_usage WHERE key=? AND day=?',key,day());if((lim?.total||0)>=30)bad('Đã đạt giới hạn 30 lượt AI của giáo viên hôm nay',429);sql.exec('INSERT INTO ai_usage(key,day,total) VALUES(?,?,1) ON CONFLICT(key,day) DO UPDATE SET total=total+1',key,day());return json({__ai_request:true,prompt,max_output_tokens:type==='worksheet'?4096:type==='class'?3200:type==='student'?2800:512});
    }
   }
   if(u.role==='student'){
@@ -168,11 +253,11 @@ CREATE TABLE IF NOT EXISTS ai_usage(key TEXT NOT NULL,day TEXT NOT NULL,total IN
  }
 }
 
-async function gemini(prompt,env){
+async function gemini(prompt,env,maxOutputTokens=2048){
  const model=env.GEMINI_MODEL||'gemini-3.8-flash';
  const ctl=new AbortController();let timeout=setTimeout(()=>ctl.abort(),35000);
  try{let r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
- method:'POST',headers:{'content-type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{thinkingConfig:{thinkingLevel:'low'},maxOutputTokens:2048}}),signal:ctl.signal});
+ method:'POST',headers:{'content-type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{thinkingConfig:{thinkingLevel:'low'},maxOutputTokens:Math.min(Math.max(Number(maxOutputTokens)||2048,256),4096)}}),signal:ctl.signal});
  let v=await r.json().catch(()=>({}));if(!r.ok){let msg=v.error?.message||'Nhà cung cấp AI không phản hồi';return json({error:`Gemini ${r.status}: ${String(msg).slice(0,250)}`},r.status===429?429:502)}
  let text=v.candidates?.[0]?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join('\n')||'';return text?json({text,model,provider:'Gemini'}):json({error:'Gemini chưa tạo được nội dung. Thử lại sau.'},502)
  }catch(e){return json({error:e.name==='AbortError'?'Gemini phản hồi quá thời gian. Thử lại sau.':'Không kết nối được Gemini. Kiểm tra hạn mức và quyền của dự án.'},502)}finally{clearTimeout(timeout)}
@@ -187,6 +272,6 @@ export default {async fetch(request,env){try{
   if(payload.setup_code&&payload.setup_code===env.ADMIN_SETUP_CODE)headers.set('x-internal-setup','yes');
  }
  const stub=env.LEARNPATH_DB.getByName('school');const forwarded=new Request(request,{headers});const response=await stub.fetch(forwarded);
- const ct=response.headers.get('content-type')||'';if(ct.includes('application/json')){const data=await response.clone().json().catch(()=>({}));if(data.__ai_request===true){return gemini(data.prompt,env)}}
+ const ct=response.headers.get('content-type')||'';if(ct.includes('application/json')){const data=await response.clone().json().catch(()=>({}));if(data.__ai_request===true){return gemini(data.prompt,env,data.max_output_tokens)}}
  return response;
  }catch(e){return json({error:e.message||'Lỗi máy chủ'},500)}}};
