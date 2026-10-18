@@ -13,7 +13,7 @@ const safe=(s,max=100)=>String(s??'').trim().slice(0,max);
 const parse=x=>{try{return JSON.parse(x||'{}')}catch{return {}}};
 const cookie=req=>(req.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith('lp_session='))?.split('=')[1]||'';
 async function sha(s){const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('')}
-async function password(pass,salt=random()){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveBits']);const hash=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:115000,hash:'SHA-256'},key,256);return salt+':'+Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function password(pass,salt=random()){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveBits']);const hash=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256);return salt+':'+Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('')}
 async function verify(pass,stored){if(!stored||!stored.includes(':'))return false;return await password(pass,stored.split(':')[0])===stored}
 const sessionCookie=(token,maxAge)=>`lp_session=${token||''}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 const QBYID=new Map(QUESTIONS.map(q=>[q.id,q]));
